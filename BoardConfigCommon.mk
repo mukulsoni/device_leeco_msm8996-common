@@ -20,6 +20,13 @@ TARGET_SPECIFIC_HEADER_PATH += $(PLATFORM_PATH)/include
 
 BOARD_VENDOR := leeco
 
+# Include SDCLANG definitions if it is requested and available
+ifeq ($(HOST_OS),linux)
+    ifneq ($(wildcard vendor/qcom/sdclang-4.0/),)
+        include vendor/aosip/sdclang/sdclang.mk
+    endif
+endif
+
 # Bootloader
 TARGET_BOOTLOADER_BOARD_NAME := msm8996
 TARGET_NO_BOOTLOADER := true
