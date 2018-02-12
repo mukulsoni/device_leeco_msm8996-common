@@ -85,6 +85,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Display power reduction (FOSS)
 PRODUCT_PROPERTY_OVERRIDES += \
+    persist.sys.strictmode.disable=true \
     ro.qcom.dpps.sensortype=3 \
     ro.qualcomm.display.paneltype=1 \
     ro.qualcomm.foss=1 \

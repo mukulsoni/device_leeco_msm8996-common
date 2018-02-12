@@ -1,3 +1,8 @@
+on early-init
+    # Enable sched boost
+    write /proc/sys/kernel/sched_boost 1
+    setprop sys.io.scheduler noop
+
 on boot
     # Bring up CPUs
     trigger init-cpus
@@ -17,8 +22,13 @@ on boot
     chown system system /dev/cpuset/camera-daemon/tasks
     chmod 0664 /dev/cpuset/camera-daemon/tasks
 
-    # Enable sched boost
-    write /proc/sys/kernel/sched_boost 1
+    # Set light thermal restrictions while optimizing apps
+    # [throttle_freq_LITTLE, throttle_freq_big, throttle_temp, unthrottle_temp]
+    write /sys/kernel/msm_thermal/zone0 "1228800 1632000 46 44"
+    write /sys/kernel/msm_thermal/zone1 "1228800 1555200 50 47"
+    write /sys/kernel/msm_thermal/zone2 "1036800 1248000 55 53"
+    write /sys/kernel/msm_thermal/zone3 "729600 729600 65 63"
+    write /sys/kernel/msm_thermal/enabled 1
 
 on enable-low-power
     # Enable all LPMs (this will enable C4, D4, D3, E4 and M3 LPMs)
@@ -28,75 +38,50 @@ on enable-low-power
     write /sys/class/kgsl/kgsl-3d0/default_pwrlevel 7
 
 on init-cpus
-    # Disable thermal bcl hotplug to switch governor
-    write /sys/module/msm_thermal/core_control/enabled 0
-    write /sys/devices/soc/soc:qcom,bcl/mode "disable"
-    write /sys/devices/soc/soc:qcom,bcl/hotplug_mask 0
-    write /sys/devices/soc/soc:qcom,bcl/hotplug_soc_mask 0
-    write /sys/devices/soc/soc:qcom,bcl/mode "enable"
-
     # Bring back main cores CPU 0,2
     write /sys/devices/system/cpu/cpu0/online 1
     write /sys/devices/system/cpu/cpu2/online 1
 
-    # Configure governor settings for LITTLE cluster
+    # Configure governor settings for little cluster
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "interactive"
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/boostpulse_duration 0
     write /sys/devices/system/cpu/cpu0/cpufreq/interactive/use_sched_load 1
     write /sys/devices/system/cpu/cpu0/cpufreq/interactive/use_migration_notif 1
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/above_hispeed_delay "40000 960000:50000 1228800:60000 1478400:70000"
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/go_hispeed_load 101
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/above_hispeed_delay 19000
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/go_hispeed_load 70
     write /sys/devices/system/cpu/cpu0/cpufreq/interactive/timer_rate 20000
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq 307200
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/io_is_busy 0
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/target_loads "75 480000:80 556800:80 729600:85 960000:90 1036800:95 1228800:100"
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/min_sample_time 19000
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/max_freq_hysteresis 79000
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq 1228800
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/io_is_busy 1
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/target_loads "85 1100000:31 1200000:45 1300000:66 1400000:93"
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/min_sample_time 40000
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/max_freq_hysteresis 100000
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 307200
-    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/ignore_hispeed_on_notif 0
+    write /sys/devices/system/cpu/cpu0/cpufreq/interactive/ignore_hispeed_on_notif 1
     write /sys/devices/system/cpu/cpu0/cpufreq/interactive/enable_prediction 1
 
     # Avoid overheating, cap the max frequency of silver core to 1.6 GHz
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq 1593600
 
-     # Configure governor settings for big cluster
+    # Configure governor settings for big cluster
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/boostpulse_duration 0
     write /sys/devices/system/cpu/cpu2/cpufreq/interactive/use_sched_load 1
     write /sys/devices/system/cpu/cpu2/cpufreq/interactive/use_migration_notif 1
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/above_hispeed_delay "40000 1036800:60000 1248000:70000 1478400:80000 1824000:90000"
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/go_hispeed_load 101
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/timer_rate 30000
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/hispeed_freq 307200
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/io_is_busy 0
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/target_loads "75 729600:80 940800:80 1036800:85 1401600:90 1824000:95 2150400:100"
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/min_sample_time 19000
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/max_freq_hysteresis 79000
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/above_hispeed_delay 19000
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/go_hispeed_load 70
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/timer_rate 20000
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/hispeed_freq 124800
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/io_is_busy 1
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/target_loads "87 1400000:31 1600000:45 1800000:66 1900000:93"
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/min_sample_time 40000
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/max_freq_hysteresis 100000
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 307200
-    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/ignore_hispeed_on_notif 0
+    write /sys/devices/system/cpu/cpu2/cpufreq/interactive/ignore_hispeed_on_notif 1
     write /sys/devices/system/cpu/cpu2/cpufreq/interactive/enable_prediction 1
 
-    # Switch to bioshock
-   write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "bioshock"
-   write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "bioshock"
-   write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "bioshock"
-   write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "bioshock"
-
-    # Re-enable thermal and BCL hotplug
-    write /sys/module/msm_thermal/core_control/enabled 1
-    write /sys/devices/soc/soc:qcom,bcl/mode "disable"
-    write /sys/devices/soc/soc:qcom,bcl/hotplug_mask 12
-    write /sys/devices/soc/soc:qcom,bcl/hotplug_soc_mask 8
-    write /sys/devices/soc/soc:qcom,bcl/mode "enable"
-
-    # Disable input boost
-    write /sys/module/cpu_boost/parameters/input_boost_enabled 0
-    write /sys/module/cpu_boost/parameters/input_boost_ms 0
-    write /sys/module/cpu_boost/parameters/input_boost_freq "0:0 1:0 2:0 3:0"
-
-    # Disable touch boost
-    write /sys/module/msm_performance/parameters/touchboost 0
-
+    # input boost
+    write /sys/kernel/cpu_input_boost/ib_freqs "1228800 1324800"
+    write /sys/kernel/cpu_input_boost/ib_duration_ms 1400
+    write /sys/kernel/cpu_input_boost/enabled 1
+    
     # Setting b.L scheduler parameters
     write /proc/sys/kernel/sched_boost 0
     write /proc/sys/kernel/sched_migration_fixup 1
@@ -123,17 +108,39 @@ on init-cpus
     write /sys/class/devfreq/soc:qcom,cpubw/bw_hwmon/up_scale 250
     write /sys/class/devfreq/soc:qcom,cpubw/bw_hwmon/idle_mbps 1600
 
-    write /sys/class/devfreq/soc:qcom,memlat-cpu0/governor "mem_latency"
-    write /sys/class/devfreq/soc:qcom,memlat-cpu0/polling_interval 10
-    write /sys/class/devfreq/soc:qcom,memlat-cpu2/governor "mem_latency"
-    write /sys/class/devfreq/soc:qcom,memlat-cpu2/polling_interval 10
-    write /sys/class/devfreq/soc:qcom,mincpubw/governor "cpufreq"
-
-on class_start:late_start
+on property:sys.boot_completed=1
     trigger enable-low-power
 
-    # Starting io prefetcher service
-    start iop
+    # update cpusets now that boot is complete and we want better load balancing
+    write /dev/cpuset/top-app/cpus 0-3
+    write /dev/cpuset/foreground/boost/cpus 2-3
+    write /dev/cpuset/background/cpus 0
+    write /dev/cpuset/system-background/cpus 0-2
+
+# Kernel tuning
+    write /sys/kernel/mm/ksm/run 0
+
+    # VM
+    write /proc/sys/vm/dirty_background_ratio 20
+    write /proc/sys/vm/dirty_expire_centisecs 100
+    write /proc/sys/vm/swappiness 5
+    write /proc/sys/vm/vfs_cache_pressure 60
+
+    setprop sys.io.scheduler "maple"
+
+    # Set thermal restrictions
+    write /sys/kernel/msm_thermal/enabled 0
+    write /sys/kernel/msm_thermal/zone0 "1401600 1785600 40 38"
+    write /sys/kernel/msm_thermal/zone1 "1324800 1555200 41 40"
+    write /sys/kernel/msm_thermal/zone2 "1228800 1478400 42 41"
+    write /sys/kernel/msm_thermal/zone3 "1228800 1401600 43 42"
+    write /sys/kernel/msm_thermal/zone4 "1190400 1324800 44 43"
+    write /sys/kernel/msm_thermal/zone5 "1190400 1248000 46 44"
+    write /sys/kernel/msm_thermal/zone6 "1113600 1190400 48 46"
+    write /sys/kernel/msm_thermal/zone7 "1036800 940800 53 50"
+    write /sys/kernel/msm_thermal/zone8 "729600 729600 65 60"
+    write /sys/kernel/msm_thermal/sampling_ms 8000
+    write /sys/kernel/msm_thermal/enabled 1
 
 on charger
     write /sys/devices/system/cpu/cpu1/online 0
@@ -143,26 +150,78 @@ on charger
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "powersave"
     write /sys/module/lpm_levels/parameters/sleep_disabled 0
 
-on property:dev.bootcomplete=1
-    setprop sys.io.scheduler "maple"
-
-    # Update cpusets now that boot is complete and we want better load balancing
-    write /dev/cpuset/top-app/cpus 0-3
-    write /dev/cpuset/foreground/boost/cpus 0-2
-    write /dev/cpuset/foreground/cpus 0-2
-    write /dev/cpuset/background/cpus 0-1
-    write /dev/cpuset/system-background/cpus 0-1
-
-# Kernel tuning
-    write /sys/module/msm_thermal/core_control/enabled 0
-    write /sys/module/msm_thermal/parameters/enabled Y
-    write /sys/kernel/mm/ksm/run 0
-
-    # VM
-    write /proc/sys/vm/dirty_background_ratio 20
-    write /proc/sys/vm/dirty_expire_centisecs 100
-    write /proc/sys/vm/swappiness 5
-    write /proc/sys/vm/vfs_cache_pressure 60
-
 on property:init.svc.recovery=running
     trigger enable-low-power
+
+on property:sys.perf.profile=0
+    # Set low-power performance settings
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu3/online 0
+    write /sys/kernel/cpu_input_boost/enabled 0
+
+    write /sys/class/devfreq/soc:qcom,cpubw/governor "powersave"
+    write /sys/class/kgsl/kgsl-3d0/devfreq/governor "powersave"
+
+    # Set normal thermal restrictions
+    write /sys/kernel/msm_thermal/enabled 0
+    write /sys/kernel/msm_thermal/zone0 "1401600 1785600 40 38"
+    write /sys/kernel/msm_thermal/zone1 "1324800 1555200 41 40"
+    write /sys/kernel/msm_thermal/zone2 "1228800 1478400 42 41"
+    write /sys/kernel/msm_thermal/zone3 "1228800 1401600 43 42"
+    write /sys/kernel/msm_thermal/zone4 "1190400 1324800 44 43"
+    write /sys/kernel/msm_thermal/zone5 "1190400 1248000 46 44"
+    write /sys/kernel/msm_thermal/zone6 "1113600 1190400 48 46"
+    write /sys/kernel/msm_thermal/zone7 "1036800 940800 53 50"
+    write /sys/kernel/msm_thermal/zone8 "729600 729600 65 60"
+    write /sys/kernel/msm_thermal/sampling_ms 8000
+    write /sys/kernel/msm_thermal/enabled 1
+
+on property:sys.perf.profile=1
+    # Set normal performance settings
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu3/online 1
+    write /sys/kernel/cpu_input_boost/enabled 1
+
+    write /sys/class/devfreq/soc:qcom,cpubw/governor "bw_hwmon"
+    write /sys/class/kgsl/kgsl-3d0/devfreq/governor "msm-adreno-tz"
+
+    # Set normal thermal restrictions
+    write /sys/kernel/msm_thermal/enabled 0
+    write /sys/kernel/msm_thermal/zone0 "1401600 1785600 40 38"
+    write /sys/kernel/msm_thermal/zone1 "1324800 1555200 41 40"
+    write /sys/kernel/msm_thermal/zone2 "1228800 1478400 42 41"
+    write /sys/kernel/msm_thermal/zone3 "1228800 1401600 43 42"
+    write /sys/kernel/msm_thermal/zone4 "1190400 1324800 44 43"
+    write /sys/kernel/msm_thermal/zone5 "1190400 1248000 46 44"
+    write /sys/kernel/msm_thermal/zone6 "1113600 1190400 48 46"
+    write /sys/kernel/msm_thermal/zone7 "1036800 940800 53 50"
+    write /sys/kernel/msm_thermal/zone8 "729600 729600 65 60"
+    write /sys/kernel/msm_thermal/sampling_ms 8000
+    write /sys/kernel/msm_thermal/enabled 1
+
+on property:sys.perf.profile=2
+    # Set high performance settings
+    # Keep little cluster at maxfreq
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "performance"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu3/online 1
+    write /sys/kernel/cpu_input_boost/enabled 1
+
+    write /sys/class/devfreq/soc:qcom,cpubw/governor "performance"
+    write /sys/class/kgsl/kgsl-3d0/devfreq/governor "performance"
+
+    # Set light thermal restrictions for performance mode
+    write /sys/kernel/msm_thermal/enabled 0
+    write /sys/kernel/msm_thermal/zone0 "1401600 1785600 46 44"
+    write /sys/kernel/msm_thermal/zone1 "1324800 1555200 47 46"
+    write /sys/kernel/msm_thermal/zone2 "1228800 1478400 48 47"
+    write /sys/kernel/msm_thermal/zone3 "1228800 1401600 49 48"
+    write /sys/kernel/msm_thermal/zone4 "1190400 1324800 50 49"
+    write /sys/kernel/msm_thermal/zone5 "1190400 1248000 52 50"
+    write /sys/kernel/msm_thermal/zone6 "1113600 1190400 54 52"
+    write /sys/kernel/msm_thermal/zone7 "1036800 940800 59 50"
+    write /sys/kernel/msm_thermal/zone8 "729600 729600 70 65"
+    write /sys/kernel/msm_thermal/sampling_ms 1000
+write /sys/kernel/msm_thermal/enabled 1
