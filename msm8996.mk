@@ -133,8 +133,7 @@ PRODUCT_PACKAGES += \
     camera.device@3.2-impl \
     camera.msm8996 \
     libshims_camera \
-    libshims_qcamera-daemon \
-    Camera2
+    libshims_qcamera-daemon
 
 # Connectivity Engine support (CNE)
 PRODUCT_PACKAGES += \
@@ -378,7 +377,9 @@ PRODUCT_PACKAGES += \
     wificond \
     wpa_supplicant \
     wpa_supplicant.conf
-
+# SCAMERA
+ PRODUCT_PACKAGES += \
+     scamera
 PRODUCT_PACKAGES += \
     ipacm \
     IPACM_cfg.xml
