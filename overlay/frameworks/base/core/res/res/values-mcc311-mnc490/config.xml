@@ -40,7 +40,4 @@
     <!-- Default network policy warning threshold, in megabytes. -->
     <integer name="config_networkPolicyDefaultWarning">51200</integer>
 
-    <!-- Sprint need a 3s delay for 3way call -->
-    <integer name="config_cdma_3waycall_flash_delay">300</integer>
-
 </resources>
